@@ -1,0 +1,13 @@
+# Copy to /etc/cloudflared/config.yml only after `cloudflared tunnel login`
+# and `cloudflared tunnel create remote-dev-code` have produced real values.
+tunnel: TUNNEL_UUID
+credentials-file: /etc/cloudflared/TUNNEL_UUID.json
+
+ingress:
+  - hostname: code.example.com
+    service: http://127.0.0.1:9080
+    originRequest:
+      httpHostHeader: code.example.com
+      connectTimeout: 10s
+      noHappyEyeballs: false
+  - service: http_status:404

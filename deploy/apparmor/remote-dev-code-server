@@ -1,0 +1,61 @@
+#include <tunables/global>
+
+profile remote-dev-code-server /opt/code-server/lib/node flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+  #include <abstractions/nameservice>
+  #include <abstractions/ssl_certs>
+
+  network inet stream,
+  network inet6 stream,
+  network unix stream,
+
+  # Shared, root-managed code-server installation. Node workers inherit this
+  # profile; the NODE_OPTIONS hook independently constrains child_process.
+  /opt/code-server/lib/node mr,
+  /opt/code-server/lib/node ix,
+  /opt/code-server/** r,
+  /opt/code-server/**/*.node mr,
+  deny /opt/code-server/lib/vscode/node_modules/node-pty/build/Release/pty.node mr,
+  /opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs r,
+  /opt/remote-dev/releases/*/deploy/code-server/lockdown-spawn.cjs r,
+  /opt/remote-dev/extensions/** r,
+
+  # The only non-code-server executable available to an editor session.
+  /usr/bin/clangd-19 ixr,
+  /usr/lib/llvm-19/** mr,
+  /usr/lib/** mr,
+  /usr/include/** r,
+
+  /etc/remote-dev/** r,
+  /etc/mime.types r,
+  /usr/share/mime/** r,
+  /usr/share/zoneinfo/** r,
+  /usr/share/fonts/** r,
+  /etc/fonts/** r,
+  /sys/devices/system/cpu/** r,
+
+  # DynamicUser state, cache and runtime directories are per UUID instance.
+  owner /var/lib/remote-dev/code-server/* rwk,
+  owner /var/lib/remote-dev/code-server/*/** rwk,
+  owner /var/cache/remote-dev/code-server/* rwk,
+  owner /var/cache/remote-dev/code-server/*/** rwk,
+  owner /run/remote-dev/code-server/* rwk,
+  owner /run/remote-dev/code-server/*/** rwk,
+
+  # The per-user ext4 image appears only at /workspace in this mount namespace.
+  owner /workspace rwk,
+  owner /workspace/** rwk,
+  owner /tmp/** rwk,
+
+  /dev/null rw,
+  /dev/urandom r,
+  /dev/random r,
+
+  # No execution permission is granted for workspace files, shells, Git,
+  # compilers, debuggers, notebook kernels or user-installed binaries.
+  deny /workspace/** x,
+  deny /bin/** x,
+  deny /usr/bin/{sh,bash,dash,zsh,git,gdb,lldb,g++,gcc,cc,c++,make,cmake,python*,perl,ruby}* x,
+  deny network raw,
+  deny capability,
+}

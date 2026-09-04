@@ -1,0 +1,38 @@
+{
+  "name": "remote-dev-submit",
+  "displayName": "Remote Dev Submit",
+  "description": "Submit one C++17 file and custom inputs to the controlled runner.",
+  "version": "0.1.0",
+  "publisher": "remote-dev-admin",
+  "license": "UNLICENSED",
+  "engines": {"vscode": "^1.100.0"},
+  "categories": ["Other"],
+  "extensionKind": ["workspace"],
+  "capabilities": {"untrustedWorkspaces": {"supported": true}},
+  "activationEvents": ["onCommand:remoteDev.submit", "onCommand:remoteDev.blocked"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {"command": "remoteDev.submit", "title": "Remote Dev: 提交并运行 C++"},
+      {"command": "remoteDev.blocked", "title": "Remote Dev: 此功能已被管理员禁用"}
+    ],
+    "menus": {
+      "editor/title": [
+        {"command": "remoteDev.submit", "when": "resourceExtname == .cpp", "group": "navigation"}
+      ]
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --target=node20 --external:vscode --outfile=dist/extension.js && esbuild src/contracts.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/contracts.mjs && esbuild src/workspace-policy.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/workspace-policy.mjs",
+    "check": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "package": "vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.100.0",
+    "@vscode/vsce": "^3.6.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,84 @@
+[Unit]
+Description=Remote Dev code-server instance %i
+After=network.target remote-dev-control.service
+Requires=remote-dev-control.service
+
+[Service]
+Type=simple
+DynamicUser=yes
+EnvironmentFile=/etc/remote-dev/code-server/%i.env
+Environment=REMOTE_DEV_INSTANCE_UUID=%i
+Environment=NODE_OPTIONS=--require=/opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs
+Environment=REMOTE_DEV_CODE_ROOT=/opt/code-server
+Environment=REMOTE_DEV_ALLOWED_EXECUTABLES=/usr/bin/clangd-19
+Environment=REMOTE_DEV_ALLOWED_CONNECTS=127.0.0.1:9000,[::1]:9000
+Environment=EXTENSIONS_GALLERY={}
+Environment=VSCODE_SKIP_BUILTIN_EXTENSIONS=vscode.debug-auto-launch,vscode.debug-server-ready,vscode.git,vscode.git-base,vscode.github,vscode.github-authentication,vscode.ipynb,vscode.builtin-notebook-renderers,ms-vscode.js-debug,ms-vscode.js-debug-companion,ms-vscode.vscode-js-profile-table,vscode.simple-browser,vscode.terminal-suggest,vscode.tunnel-forwarding
+Environment=HOME=/var/lib/remote-dev/code-server/%i
+Environment=XDG_DATA_HOME=/var/lib/remote-dev/code-server/%i
+Environment=XDG_CONFIG_HOME=/var/lib/remote-dev/code-server/%i/User
+Environment=XDG_CACHE_HOME=/var/cache/remote-dev/code-server/%i
+Environment=XDG_RUNTIME_DIR=/run/remote-dev/code-server/%i
+StateDirectory=remote-dev/code-server/%i remote-dev/code-server/%i/User
+MountImages=/var/lib/remote-dev/workspaces/%i.img:/workspace:nosuid,nodev,noexec
+RuntimeDirectory=remote-dev/code-server/%i
+CacheDirectory=remote-dev/code-server/%i
+StateDirectoryMode=0700
+RuntimeDirectoryMode=0700
+CacheDirectoryMode=0700
+WorkingDirectory=/workspace
+ExecStart=/opt/code-server/lib/node /opt/code-server \
+  --auth none \
+  --bind-addr 127.0.0.1:${CODE_SERVER_PORT} \
+  --user-data-dir /var/lib/remote-dev/code-server/%i \
+  --extensions-dir /opt/remote-dev/extensions \
+  --disable-telemetry \
+  --disable-update-check \
+  --disable-file-uploads \
+  --disable-proxy \
+  --disable-getting-started-override \
+  --vscode-option disable-extension=vscode.debug-auto-launch \
+  --vscode-option disable-extension=vscode.debug-server-ready \
+  --vscode-option disable-extension=vscode.git \
+  --vscode-option disable-extension=vscode.git-base \
+  --vscode-option disable-extension=vscode.github \
+  --vscode-option disable-extension=vscode.github-authentication \
+  --vscode-option disable-extension=vscode.ipynb \
+  --vscode-option disable-extension=vscode.builtin-notebook-renderers \
+  --vscode-option disable-extension=ms-vscode.js-debug \
+  --vscode-option disable-extension=ms-vscode.js-debug-companion \
+  --vscode-option disable-extension=ms-vscode.vscode-js-profile-table \
+  --vscode-option disable-extension=vscode.simple-browser \
+  --vscode-option disable-extension=vscode.terminal-suggest \
+  --vscode-option disable-extension=vscode.tunnel-forwarding \
+  /workspace
+Restart=on-failure
+RestartSec=3
+UMask=0077
+AppArmorProfile=remote-dev-code-server
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/opt/code-server /opt/remote-dev/extensions /opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs
+InaccessiblePaths=-/var/lib/remote-dev/code-server/%i/extensions -/workspace/.vscode/extensions /opt/code-server/lib/vscode/node_modules/node-pty/build/Release/pty.node
+BindReadOnlyPaths=/etc/remote-dev/code-server/locked-settings.json:/var/lib/remote-dev/code-server/%i/User/settings.json
+BindReadOnlyPaths=/etc/remote-dev/code-server/locked-keybindings.json:/var/lib/remote-dev/code-server/%i/User/keybindings.json
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+MemoryHigh=384M
+MemoryMax=512M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

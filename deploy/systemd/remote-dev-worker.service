@@ -1,0 +1,39 @@
+[Unit]
+Description=Remote Dev production job worker
+After=remote-dev-control.service
+Requires=remote-dev-control.service
+
+[Service]
+Type=simple
+User=remote-dev-runner
+Group=remote-dev-runner
+WorkingDirectory=/opt/remote-dev/current/app
+Environment=REMOTE_DEV_DATA=/var/lib/remote-dev
+ExecStart=/opt/remote-dev/current/app/.venv/bin/remote-dev worker --broker-socket /run/remote-dev/control-worker.sock --sandbox-exec /opt/remote-dev/current/libexec/sandbox-exec
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/remote-dev/runner
+InaccessiblePaths=-/var/lib/remote-dev/control.db -/var/lib/remote-dev/control.db-wal -/var/lib/remote-dev/control.db-shm
+InaccessiblePaths=-/var/lib/remote-dev/workspaces
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX
+IPAddressDeny=any
+Delegate=memory pids
+MemoryHigh=768M
+MemoryMax=1024M
+TasksMax=128
+
+[Install]
+WantedBy=multi-user.target

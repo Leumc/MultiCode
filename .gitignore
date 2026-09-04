@@ -1,0 +1,54 @@
+# Python environments and caches
+.venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node dependencies and package-manager caches
+extension/node_modules/
+node_modules/
+.npm/
+
+# Local development and downloaded toolchains
+.tools/
+.dev/
+
+# Runtime state and user data
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.img
+*.log
+*.pid
+*.sock
+
+# Secrets and local environment overrides
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Downloaded archives and temporary files
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.tmp
+*.swp
+*~
+
+# Editor and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

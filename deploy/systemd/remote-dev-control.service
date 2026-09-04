@@ -1,0 +1,41 @@
+[Unit]
+Description=Remote Dev control plane
+After=network.target
+
+[Service]
+Type=simple
+User=remote-dev
+Group=remote-dev-runner
+EnvironmentFile=/etc/remote-dev/control.env
+WorkingDirectory=/opt/remote-dev/current/app
+Environment=REMOTE_DEV_DATA=/var/lib/remote-dev
+Environment=REMOTE_DEV_WORKSPACES=/var/lib/remote-dev/workspaces
+RuntimeDirectory=remote-dev
+RuntimeDirectoryMode=0750
+ExecStart=/opt/remote-dev/current/app/.venv/bin/remote-dev serve --host 127.0.0.1 --port 9000 --broker-socket /run/remote-dev/control-worker.sock --worker-uid ${REMOTE_DEV_WORKER_UID}
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/remote-dev
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+IPAddressDeny=any
+IPAddressAllow=localhost
+MemoryHigh=192M
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

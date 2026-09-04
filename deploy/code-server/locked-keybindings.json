@@ -1,0 +1,10 @@
+[
+    {"key":"ctrl+`","command":"remoteDev.blocked"},
+    {"key":"ctrl+shift+`","command":"remoteDev.blocked"},
+    {"key":"f5","command":"remoteDev.blocked"},
+    {"key":"ctrl+f5","command":"remoteDev.blocked"},
+    {"key":"ctrl+shift+b","command":"remoteDev.blocked"},
+    {"key":"ctrl+shift+d","command":"remoteDev.blocked"},
+    {"key":"ctrl+shift+x","command":"remoteDev.blocked"},
+    {"key":"ctrl+shift+g","command":"remoteDev.blocked"}
+]

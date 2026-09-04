@@ -13,7 +13,7 @@ def text(path: Path) -> str:
 def test_services_execute_from_atomic_current_release():
     control = text(CONTROL)
     worker = text(WORKER)
-    expected = "/opt/remote-dev/current/app/.venv/bin/remote-dev"
+    expected = "/opt/remote-dev/current/app/.venv/bin/python -m remote_dev.cli"
     assert f"ExecStart={expected} serve" in control
     assert f"ExecStart={expected} worker" in worker
     assert "WorkingDirectory=/opt/remote-dev/current/app" in control

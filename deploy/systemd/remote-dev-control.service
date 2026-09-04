@@ -12,7 +12,7 @@ Environment=REMOTE_DEV_DATA=/var/lib/remote-dev
 Environment=REMOTE_DEV_WORKSPACES=/var/lib/remote-dev/workspaces
 RuntimeDirectory=remote-dev
 RuntimeDirectoryMode=0750
-ExecStart=/opt/remote-dev/current/app/.venv/bin/remote-dev serve --host 127.0.0.1 --port 9000 --broker-socket /run/remote-dev/control-worker.sock --worker-uid ${REMOTE_DEV_WORKER_UID}
+ExecStart=/opt/remote-dev/current/app/.venv/bin/python -m remote_dev.cli serve --host 127.0.0.1 --port 9000 --broker-socket /run/remote-dev/control-worker.sock --worker-uid ${REMOTE_DEV_WORKER_UID}
 Restart=on-failure
 RestartSec=3
 UMask=0077

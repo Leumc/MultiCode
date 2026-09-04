@@ -89,7 +89,7 @@ for uuid in "${UUIDS[@]}"; do
 done
 caddy_temp=$(mktemp "$CONFIG_DIR/.Caddyfile.XXXXXX")
 cleanup_paths+=("$caddy_temp")
-"$RELEASE/app/.venv/bin/remote-dev" render-gateway "${gateway_args[@]}" --output "$caddy_temp"
+"$RELEASE/app/.venv/bin/python" -m remote_dev.cli render-gateway "${gateway_args[@]}" --output "$caddy_temp"
 publish_root_file "$caddy_temp" /etc/remote-dev/Caddyfile 0644
 
 extension_home=$(mktemp -d)

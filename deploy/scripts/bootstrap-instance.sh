@@ -40,7 +40,7 @@ repair_database_permissions() {
     exit "$status"
 }
 trap repair_database_permissions EXIT
-"$RELEASE/app/.venv/bin/remote-dev" bootstrap-instance \
+"$RELEASE/app/.venv/bin/python" -m remote_dev.cli bootstrap-instance \
     --instance "$INSTANCE" --username "$USERNAME" --release "$RELEASE"
 secure_control_database_files
 trap - EXIT

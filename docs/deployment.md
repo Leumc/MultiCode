@@ -82,7 +82,7 @@ sudo deploy/scripts/prepare-host.sh
 完成后，在所有托管服务仍 inactive 时完成离线身份 bootstrap。管理员和开发者密码均由 TTY 隐藏输入，不存在密码命令行参数：
 
 ```bash
-sudo /opt/remote-dev/current/app/.venv/bin/remote-dev init-admin --username admin
+sudo /opt/remote-dev/current/app/.venv/bin/python -m remote_dev.cli init-admin --username admin
 sudo deploy/scripts/bootstrap-instance.sh \
   --instance 11111111-1111-4111-8111-111111111111 --username alice
 sudo deploy/scripts/bootstrap-instance.sh \

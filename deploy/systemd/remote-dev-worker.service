@@ -9,7 +9,7 @@ User=remote-dev-runner
 Group=remote-dev-runner
 WorkingDirectory=/opt/remote-dev/current/app
 Environment=REMOTE_DEV_DATA=/var/lib/remote-dev
-ExecStart=/opt/remote-dev/current/app/.venv/bin/remote-dev worker --broker-socket /run/remote-dev/control-worker.sock --sandbox-exec /opt/remote-dev/current/libexec/sandbox-exec
+ExecStart=/opt/remote-dev/current/app/.venv/bin/python -m remote_dev.cli worker --broker-socket /run/remote-dev/control-worker.sock --sandbox-exec /opt/remote-dev/current/libexec/sandbox-exec
 Restart=on-failure
 RestartSec=3
 UMask=0077

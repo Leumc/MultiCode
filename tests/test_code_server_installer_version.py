@@ -44,6 +44,21 @@ def test_release_install_uses_noneditable_application_install():
     assert "--no-editable" in body
 
 
+def test_production_launchers_do_not_use_relocated_console_script_shebang():
+    root = Path(__file__).parents[1]
+    production_files = [
+        root / "deploy/scripts/prepare-host.sh",
+        root / "deploy/scripts/bootstrap-instance.sh",
+        root / "deploy/systemd/remote-dev-control.service",
+        root / "deploy/systemd/remote-dev-worker.service",
+        root / "docs/deployment.md",
+    ]
+    for path in production_files:
+        body = path.read_text(encoding="utf-8")
+        assert ".venv/bin/remote-dev" not in body
+        assert ".venv/bin/python" in body
+
+
 def test_release_installer_publishes_tree_readable_by_service_users():
     body = RELEASE_INSTALL.read_text(encoding="utf-8")
     assert 'find "$STAGE" -type d -exec chmod 0755 {} +' in body

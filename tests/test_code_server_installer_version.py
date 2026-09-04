@@ -38,6 +38,12 @@ def test_prepare_host_publishes_extension_tree_readable_by_dynamic_users():
     assert 'find /opt/remote-dev/extensions -type f ! -perm /111 -exec chmod 0644 {} +' in body
 
 
+def test_release_install_uses_noneditable_application_install():
+    body = RELEASE_INSTALL.read_text(encoding="utf-8")
+    assert "uv sync" in body
+    assert "--no-editable" in body
+
+
 def test_release_installer_publishes_tree_readable_by_service_users():
     body = RELEASE_INSTALL.read_text(encoding="utf-8")
     assert 'find "$STAGE" -type d -exec chmod 0755 {} +' in body

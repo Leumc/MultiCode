@@ -54,7 +54,7 @@ cp -a -- "$SOURCE_DIR/src" "$SOURCE_DIR/pyproject.toml" "$SOURCE_DIR/README.md" 
 cp -a -- "$SOURCE_DIR/uv.lock" "$STAGE/app/uv.lock"
 cp -a -- "$SOURCE_DIR/deploy/systemd" "$SOURCE_DIR/deploy/apparmor" "$SOURCE_DIR/deploy/code-server" "$STAGE/"
 cp -a -- "$SOURCE_DIR/extension/remote-dev-submit-0.1.0.vsix" "$STAGE/extensions/"
-uv sync --project "$STAGE/app" --frozen --no-dev --no-cache
+uv sync --project "$STAGE/app" --frozen --no-dev --no-cache --no-editable
 gcc -O2 -Wall -Wextra -Werror \
     "$SOURCE_DIR/sandbox/sandbox_exec.c" -lseccomp -o "$STAGE/libexec/sandbox-exec"
 chmod 0755 "$STAGE/libexec/sandbox-exec"

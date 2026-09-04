@@ -1,6 +1,8 @@
 import sqlite3
 import uuid
 
+import pytest
+
 from remote_dev.database import Database
 
 
@@ -37,3 +39,18 @@ def test_initialize_backfills_stable_public_id_for_legacy_users(tmp_path):
 
     database.initialize()
     assert database.get_user_by_username("admin")["public_id"] == first
+
+
+def test_create_developer_rejects_noncanonical_explicit_public_id(tmp_path):
+    database = Database(tmp_path / "control.db")
+    database.initialize()
+    for public_id in (
+        "550E8400-E29B-41D4-A716-446655440000",
+        "550e8400e29b41d4a716446655440000",
+        "not-a-uuid",
+    ):
+        with pytest.raises(ValueError, match="canonical lowercase UUID"):
+            database.create_developer(
+                "alice", "developer passphrase 123", "rdp_test",
+                "/var/lib/remote-dev/workspaces/example.img", public_id=public_id,
+            )

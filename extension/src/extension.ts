@@ -1,18 +1,15 @@
 import * as vscode from "vscode";
 import { ACTIVE_STATES, JobResult, validateLimits } from "./contracts";
+import {readApiToken} from "./credential";
 import { isWorkspaceCppFile } from "./workspace-policy";
 
 const API_BASE = (process.env.REMOTE_DEV_API_BASE || "http://127.0.0.1:9000").replace(/\/$/, "");
-const API_TOKEN = process.env.REMOTE_DEV_API_TOKEN || "";
-
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-    if (!API_TOKEN) {
-        throw new Error("管理员尚未为当前 code-server 实例注入提交令牌");
-    }
+    const apiToken = readApiToken();
     const response = await fetch(`${API_BASE}${path}`, {
         ...init,
         headers: {
-            "Authorization": `Bearer ${API_TOKEN}`,
+            "Authorization": `Bearer ${apiToken}`,
             "Content-Type": "application/json",
             ...(init.headers || {}),
         },

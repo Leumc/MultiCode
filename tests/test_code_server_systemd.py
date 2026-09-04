@@ -87,7 +87,7 @@ def test_locked_ui_configuration_hides_restricted_core_views_and_gallery():
 def test_lockdown_hook_is_loaded_from_atomic_current_release():
     text = UNIT_PATH.read_text(encoding="utf-8")
     assert (
-        "NODE_OPTIONS=--require=/opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs"
+        "NODE_OPTIONS=--require=/opt/remote-dev/current/code-server/lockdown-spawn.cjs"
         in text
     )
     assert "NODE_OPTIONS=--require=/opt/remote-dev/lockdown-spawn.cjs" not in text
@@ -109,6 +109,15 @@ def test_root_managed_instance_config_only_supplies_loopback_port():
     assert values("EnvironmentFile") == ["/etc/remote-dev/code-server/%i.env"]
     assert "--bind-addr 127.0.0.1:${CODE_SERVER_PORT}" in command
     assert "0.0.0.0" not in command
+
+
+def test_submit_token_uses_systemd_credential_not_environment_or_argv():
+    text = UNIT_PATH.read_text(encoding="utf-8")
+    assert values("LoadCredential") == [
+        "remote-dev-api-token:/etc/remote-dev/credentials/%i.token"
+    ]
+    assert "REMOTE_DEV_API_TOKEN=" not in text
+    assert "remote-dev-api-token" not in exec_start()
 
 
 def test_browser_upload_route_is_disabled_without_disabling_workspace_trust():

@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "deploy/scripts"
-SCRIPT_NAMES = ("install.sh", "install-code-server.sh", "prepare-host.sh", "verify.sh", "backup.sh", "restore.sh", "rollback.sh")
+SCRIPT_NAMES = ("install.sh", "install-code-server.sh", "prepare-host.sh", "bootstrap-instance.sh", "verify.sh", "backup.sh", "restore.sh", "rollback.sh")
 
 
 def script(name: str) -> str:
@@ -27,7 +27,7 @@ def test_shared_validation_rejects_wrong_domain_and_non_uuid():
     assert "EXPECTED_DOMAIN" not in common
     assert "validate_domain" in common
     assert "validate_uuid" in common
-    assert "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}" in common
+    assert "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}" in common
     for name in ("install.sh", "verify.sh"):
         body = script(name)
         assert "validate_domain" in body
@@ -62,6 +62,16 @@ def test_install_uses_immutable_versioned_release_and_atomic_current_symlink():
     assert "systemctl enable" not in body
 
 
+def test_install_accepts_only_one_to_three_unique_canonical_lowercase_uuids():
+    body = script("install.sh")
+    common = script("common.sh")
+    assert "${#UUIDS[@]} <= 3" in body
+    assert "duplicate instance UUID" in body
+    assert "declare -A seen_uuids" in body
+    assert "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}" in common
+    assert "[0-9a-fA-F]" not in common
+
+
 def test_install_builds_complete_immutable_runtime():
     body = script("install.sh")
     assert "uv sync" in body and "--frozen" in body and "--no-dev" in body
@@ -84,6 +94,7 @@ def test_code_server_installer_is_pinned_and_non_overwriting():
 
 def test_prepare_host_has_bounded_non_activating_scope():
     body = script("prepare-host.sh")
+    assert "duplicate release instance UUID" in body
     assert "remote-dev-runner" in body and "remote-dev-gateway" in body
     assert "code-server@.service" in body
     assert "remote-dev-code-server" in body
@@ -100,6 +111,42 @@ def test_prepare_host_has_bounded_non_activating_scope():
         assert forbidden not in body.lower()
 
 
+def test_prepare_host_atomically_publishes_root_owned_runtime_configs():
+    body = script("prepare-host.sh")
+    common = script("common.sh")
+    assert body.count("publish_root_file") >= 3
+    assert "mktemp \"$CONFIG_DIR/" in body
+    assert "chown root:root" in common
+    assert "mv -Tf" in common
+
+
+def test_bootstrap_wrapper_is_offline_root_only_and_never_accepts_secrets():
+    body = script("bootstrap-instance.sh")
+    assert "assert_managed_services_inactive" in body
+    assert "flock -n 9" in body
+    assert '--release "$RELEASE"' in body
+    assert "secure_control_database_files" in body
+    common = script("common.sh")
+    assert "chown remote-dev:remote-dev-runner" in common
+    assert "chmod 0600" in common
+    assert "bootstrap-instance" in body
+    assert "--password" not in body and "--token" not in body
+    assert "systemctl start" not in body and "systemctl restart" not in body
+
+
+def test_verify_derives_exact_roster_from_release_and_checks_credentials():
+    body = script("verify.sh")
+    assert "--instance" not in body
+    assert "remote_dev.verify_bootstrap" in body
+    assert '"$CONFIG_DIR/credentials"' in body
+    verifier = (ROOT / "src/remote_dev/verify_bootstrap.py").read_text()
+    assert "api_token_hash" in verifier and "hmac.compare_digest" in verifier
+    assert "mode=ro&immutable=1" in body
+    assert "verify_control_database_files" in body
+    assert "setpriv --reuid=remote-dev --regid=remote-dev-runner --init-groups" in body
+    assert "runuser" not in body
+
+
 def test_backup_is_atomic_and_uses_sqlite_online_backup_with_integrity_check():
     body = script("backup.sh")
     assert "sqlite3" in body
@@ -107,6 +154,7 @@ def test_backup_is_atomic_and_uses_sqlite_online_backup_with_integrity_check():
     assert "PRAGMA integrity_check" in body
     assert ".incomplete" in body
     assert "mv" in body
+    assert "secure_control_database_files" in body
     assert "--reflink=auto" in body
     assert "/var/lib/remote-dev/workspaces" in body
     assert "/var/lib/private/remote-dev/code-server" in body
@@ -125,6 +173,7 @@ def test_restore_requires_empty_target_or_pre_restore_backup_and_checks_db():
     assert "backup.sh" in body
     assert "systemctl stop" not in body
     assert "systemctl restart" not in body
+    assert "secure_control_database_files" in body
 
 
 def test_rollback_atomically_switches_versioned_release_symlink_only():

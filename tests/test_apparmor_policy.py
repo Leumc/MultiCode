@@ -13,7 +13,9 @@ def profile_text() -> str:
 def test_profile_uses_uuid_image_mount_layout_not_legacy_srv_paths():
     value = profile_text()
     assert "/srv/remote-dev" not in value
-    assert "/opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs r," in value
+    assert "/opt/remote-dev/current/code-server/lockdown-spawn.cjs r," in value
+    assert "/opt/remote-dev/releases/*/code-server/lockdown-spawn.cjs r," in value
+    assert "/run/credentials/code-server@*.service/remote-dev-api-token r," in value
     assert "/opt/remote-dev/lockdown-spawn.cjs" not in value
     assert "owner /workspace/** rwk," in value
     assert "deny /workspace/** x," in value

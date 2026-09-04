@@ -31,9 +31,15 @@ done
 validate_domain "$DOMAIN"
 validate_version "$VERSION"
 (( ${#UUIDS[@]} > 0 )) || fail "at least one --instance UUID is required"
-for uuid in "${UUIDS[@]}"; do validate_uuid "$uuid"; done
+(( ${#UUIDS[@]} <= 3 )) || fail "at most three --instance UUIDs are allowed"
+declare -A seen_uuids=()
+for uuid in "${UUIDS[@]}"; do
+    validate_uuid "$uuid"
+    [[ ! ${seen_uuids[$uuid]+present} ]] || fail "duplicate instance UUID"
+    seen_uuids[$uuid]=1
+done
 [[ -f $SOURCE_DIR/pyproject.toml && -d $SOURCE_DIR/src && -d $SOURCE_DIR/deploy ]] || fail "source is not a release tree"
-require_commands install cp ln mv readlink uv gcc
+require_commands install cp ln mv readlink uv gcc find chmod
 
 # Immutable releases live below /opt/remote-dev/releases.
 install -d -o root -g root -m 0755 "$RELEASES_DIR"
@@ -55,7 +61,9 @@ chmod 0755 "$STAGE/libexec/sandbox-exec"
 printf 'domain=%s\nversion=%s\n' "$DOMAIN" "$VERSION" >"$STAGE/release.conf"
 printf '%s\n' "${UUIDS[@]}" >"$STAGE/instances"
 chown -R root:root "$STAGE"
-chmod -R go-w "$STAGE"
+find "$STAGE" -type f -perm /111 -exec chmod 0755 {} +
+find "$STAGE" -type f ! -perm /111 -exec chmod 0644 {} +
+find "$STAGE" -type d -exec chmod 0755 {} +
 mv -- "$STAGE" "$FINAL"
 
 if [[ -L $CURRENT_LINK ]]; then

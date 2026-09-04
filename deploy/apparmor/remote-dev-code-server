@@ -16,8 +16,9 @@ profile remote-dev-code-server /opt/code-server/lib/node flags=(attach_disconnec
   /opt/code-server/** r,
   /opt/code-server/**/*.node mr,
   deny /opt/code-server/lib/vscode/node_modules/node-pty/build/Release/pty.node mr,
-  /opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs r,
-  /opt/remote-dev/releases/*/deploy/code-server/lockdown-spawn.cjs r,
+  /opt/remote-dev/current/code-server/lockdown-spawn.cjs r,
+  /opt/remote-dev/releases/*/code-server/lockdown-spawn.cjs r,
+  /run/credentials/code-server@*.service/remote-dev-api-token r,
   /opt/remote-dev/extensions/** r,
 
   # The only non-code-server executable available to an editor session.

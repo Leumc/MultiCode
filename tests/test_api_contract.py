@@ -151,6 +151,33 @@ def test_only_admin_can_create_users(app_env):
     assert response.status_code == 401
 
 
+def test_managed_mode_rejects_web_create_and_token_rotation(tmp_path):
+    database = Database(tmp_path / "control.db")
+    database.initialize()
+    database.create_admin("admin", "correct horse battery staple")
+    existing = database.create_developer(
+        "alice", "developer passphrase 123", "rdp_existing",
+        str(tmp_path / "workspaces/existing.img"),
+    )
+    app = create_app(
+        database=database, workspace_root=tmp_path / "workspaces",
+        secure_cookies=False, managed_mode=True,
+    )
+    with TestClient(app) as client:
+        headers = admin_login(client)
+        created = client.post(
+            "/api/admin/users", headers=headers,
+            json={"username": "bob", "password": "developer passphrase 123"},
+        )
+        rotated = client.post(
+            f"/api/admin/users/{existing['public_id']}/rotate-token",
+            headers=headers, json={},
+        )
+    assert created.status_code == 403
+    assert rotated.status_code == 403
+    assert "offline" in created.json()["detail"].lower()
+
+
 def test_developer_can_submit_one_cpp_with_multiple_inputs(app_env):
     client, _, _ = app_env
     headers = admin_login(client)

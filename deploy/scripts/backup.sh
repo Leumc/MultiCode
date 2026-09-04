@@ -17,7 +17,7 @@ while (( $# )); do
     esac
 done
 [[ $DESTINATION == /* && $DESTINATION != / ]] || fail "backup destination must be an absolute, non-root directory"
-require_commands sqlite3 install cp rsync sha256sum find sort mv systemctl
+require_commands sqlite3 install cp rsync sha256sum find sort mv systemctl chown chmod
 [[ -f $CONTROL_DB ]] || fail "control database is missing"
 assert_workspace_services_inactive
 # Audited production inputs: /var/lib/remote-dev/workspaces UUID images and
@@ -31,7 +31,14 @@ install -d -o root -g root -m 0700 "$DESTINATION"
 TMP="$DESTINATION/.${BACKUP_ID}.incomplete"
 FINAL="$DESTINATION/$BACKUP_ID"
 [[ ! -e $TMP && ! -e $FINAL ]] || fail "backup ID collision"
-cleanup() { rm -rf -- "$TMP"; }
+cleanup() {
+    local status=$?
+    set +e
+    rm -rf -- "$TMP"
+    secure_control_database_files
+    trap - EXIT
+    exit "$status"
+}
 trap cleanup EXIT
 install -d -m 0700 "$TMP/database" "$TMP/workspaces" "$TMP/state" "$TMP/config/code-server"
 
@@ -81,5 +88,6 @@ printf 'backup_id=%s\ncreated_utc=%s\n' "$BACKUP_ID" "$(date -u +%FT%TZ)" >"$TMP
 )
 chmod -R go-rwx "$TMP"
 mv -- "$TMP" "$FINAL"
+secure_control_database_files
 trap - EXIT
 printf 'Backup completed: %s\n' "$BACKUP_ID"

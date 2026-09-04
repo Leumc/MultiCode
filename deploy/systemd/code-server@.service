@@ -7,8 +7,9 @@ Requires=remote-dev-control.service
 Type=simple
 DynamicUser=yes
 EnvironmentFile=/etc/remote-dev/code-server/%i.env
+LoadCredential=remote-dev-api-token:/etc/remote-dev/credentials/%i.token
 Environment=REMOTE_DEV_INSTANCE_UUID=%i
-Environment=NODE_OPTIONS=--require=/opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs
+Environment=NODE_OPTIONS=--require=/opt/remote-dev/current/code-server/lockdown-spawn.cjs
 Environment=REMOTE_DEV_CODE_ROOT=/opt/code-server
 Environment=REMOTE_DEV_ALLOWED_EXECUTABLES=/usr/bin/clangd-19
 Environment=REMOTE_DEV_ALLOWED_CONNECTS=127.0.0.1:9000,[::1]:9000
@@ -61,7 +62,7 @@ PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
-ReadOnlyPaths=/opt/code-server /opt/remote-dev/extensions /opt/remote-dev/current/deploy/code-server/lockdown-spawn.cjs
+ReadOnlyPaths=/opt/code-server /opt/remote-dev/extensions /opt/remote-dev/current/code-server/lockdown-spawn.cjs
 InaccessiblePaths=-/var/lib/remote-dev/code-server/%i/extensions -/workspace/.vscode/extensions /opt/code-server/lib/vscode/node_modules/node-pty/build/Release/pty.node
 BindReadOnlyPaths=/etc/remote-dev/code-server/locked-settings.json:/var/lib/remote-dev/code-server/%i/User/settings.json
 BindReadOnlyPaths=/etc/remote-dev/code-server/locked-keybindings.json:/var/lib/remote-dev/code-server/%i/User/keybindings.json

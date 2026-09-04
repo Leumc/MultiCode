@@ -51,6 +51,26 @@ function validateLimits(timeMs, memoryMiB, caseCount) {
   return null;
 }
 
+// src/credential.ts
+var import_node_fs = require("node:fs");
+var import_node_path = require("node:path");
+function readApiToken(environment = process.env) {
+  const directory = environment.CREDENTIALS_DIRECTORY;
+  if (!directory) {
+    throw new Error("systemd credential directory is unavailable");
+  }
+  let token;
+  try {
+    token = (0, import_node_fs.readFileSync)((0, import_node_path.join)(directory, "remote-dev-api-token"), "utf8").trim();
+  } catch {
+    throw new Error("systemd API token credential is unavailable");
+  }
+  if (!token) {
+    throw new Error("systemd API token credential is empty");
+  }
+  return token;
+}
+
 // src/workspace-policy.ts
 var path = __toESM(require("node:path"));
 function isWorkspaceCppFile(candidate, roots) {
@@ -70,15 +90,12 @@ function isWorkspaceCppFile(candidate, roots) {
 
 // src/extension.ts
 var API_BASE = (process.env.REMOTE_DEV_API_BASE || "http://127.0.0.1:9000").replace(/\/$/, "");
-var API_TOKEN = process.env.REMOTE_DEV_API_TOKEN || "";
 async function api(path2, init = {}) {
-  if (!API_TOKEN) {
-    throw new Error("\u7BA1\u7406\u5458\u5C1A\u672A\u4E3A\u5F53\u524D code-server \u5B9E\u4F8B\u6CE8\u5165\u63D0\u4EA4\u4EE4\u724C");
-  }
+  const apiToken = readApiToken();
   const response = await fetch(`${API_BASE}${path2}`, {
     ...init,
     headers: {
-      "Authorization": `Bearer ${API_TOKEN}`,
+      "Authorization": `Bearer ${apiToken}`,
       "Content-Type": "application/json",
       ...init.headers || {}
     },

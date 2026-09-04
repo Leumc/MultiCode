@@ -215,6 +215,11 @@ class Database:
         public_id: str | None = None,
     ) -> dict[str, Any]:
         public_id = public_id or str(uuid.uuid4())
+        try:
+            if str(uuid.UUID(public_id)) != public_id:
+                raise ValueError
+        except (ValueError, AttributeError, TypeError):
+            raise ValueError("public_id must be a canonical lowercase UUID") from None
         with self.connect() as connection:
             cursor = connection.execute(
                 """INSERT INTO users
@@ -286,6 +291,16 @@ class Database:
             if updated != 1:
                 return None
         return self.get_user(user_id)
+
+    def delete_unconfigured_developer(self, user_id: int, public_id: str) -> None:
+        """Compensate a failed offline bootstrap before the instance is activated."""
+        with self.connect() as connection:
+            deleted = connection.execute(
+                "DELETE FROM users WHERE id=? AND public_id=? AND role='developer'",
+                (user_id, public_id),
+            ).rowcount
+            if deleted != 1:
+                raise RuntimeError("unable to roll back failed developer bootstrap")
 
     def revoke_session_token(self, encoded: str) -> bool:
         with self.connect() as connection:

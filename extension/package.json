@@ -23,7 +23,7 @@
     }
   },
   "scripts": {
-    "build": "esbuild src/extension.ts --bundle --platform=node --target=node20 --external:vscode --outfile=dist/extension.js && esbuild src/contracts.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/contracts.mjs && esbuild src/workspace-policy.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/workspace-policy.mjs",
+    "build": "esbuild src/extension.ts --bundle --platform=node --target=node20 --external:vscode --outfile=dist/extension.js && esbuild src/contracts.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/contracts.mjs && esbuild src/workspace-policy.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/workspace-policy.mjs && esbuild src/credential.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/credential.mjs",
     "check": "tsc --noEmit",
     "test": "node --test test/*.test.mjs",
     "package": "vsce package --no-dependencies"

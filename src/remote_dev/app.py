@@ -33,7 +33,7 @@ def public_user(row: dict[str, Any]) -> dict[str, Any]:
 
 def create_app(
     *, database: Database, workspace_root: str | Path, secure_cookies: bool = True,
-    workspace_size_mib: int = 1024,
+    workspace_size_mib: int = 1024, managed_mode: bool = False,
 ) -> FastAPI:
     workspace_root = Path(workspace_root)
     app = FastAPI(title="Remote Dev Control Plane", version="0.1.0", docs_url=None, redoc_url=None)
@@ -208,6 +208,8 @@ def create_app(
 
     @app.post("/api/admin/users", status_code=status.HTTP_201_CREATED)
     def create_user(payload: UserCreate, admin: dict[str, Any] = Depends(csrf_admin)):
+        if managed_mode:
+            raise HTTPException(status_code=403, detail="managed instances require offline bootstrap")
         if len(database.list_developers()) >= MAX_DEVELOPER_ACCOUNTS:
             raise HTTPException(status_code=409, detail="developer account limit reached")
         if database.get_user_by_username(payload.username):
@@ -267,6 +269,8 @@ def create_app(
 
     @app.post("/api/admin/users/{public_id}/rotate-token")
     def rotate_user_token(public_id: str, admin: dict[str, Any] = Depends(csrf_admin)):
+        if managed_mode:
+            raise HTTPException(status_code=403, detail="managed instances require offline token rotation")
         current = developer_from_public_id(public_id)
         token = new_api_token()
         user = database.rotate_developer_token(current["id"], token)

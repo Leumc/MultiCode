@@ -23,7 +23,7 @@ done
 validate_uuid "$BACKUP_ID"
 [[ $MODE == --empty-target || $MODE == --backup-current ]] || fail "explicitly choose --empty-target or --backup-current"
 [[ $SOURCE_ROOT == /* && $SOURCE_ROOT != / ]] || fail "backup source must be an absolute, non-root directory"
-require_commands sqlite3 sha256sum install cp rsync mv systemctl cmp find sort
+require_commands sqlite3 sha256sum install cp rsync mv systemctl cmp find sort chown chmod
 BACKUP="$SOURCE_ROOT/$BACKUP_ID"
 [[ -d $BACKUP && ! -L $BACKUP ]] || fail "backup not found"
 (cd -- "$BACKUP" && sha256sum --check --strict manifest.sha256 >/dev/null) || fail "backup manifest verification failed"
@@ -61,6 +61,7 @@ mv -- "$RESTORE_ROOT/state" "$STATE_DIR"
 mv -- "$RESTORE_ROOT/config/code-server" "$CONFIG_DIR/code-server"
 install -m 0600 -o root -g root "$RESTORE_ROOT/control.db" "$CONTROL_DB.new"
 mv -f -- "$CONTROL_DB.new" "$CONTROL_DB"
+secure_control_database_files
 trap - EXIT
 rm -rf -- "$RESTORE_ROOT"
 printf 'Restore completed from backup %s; no service was started or restarted.\n' "$BACKUP_ID"

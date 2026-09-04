@@ -7,10 +7,11 @@ source "$SCRIPT_DIR/common.sh"
 (( EUID == 0 )) || fail "this script must be run as root"
 require_root
 umask 077
-require_commands sha256sum tar install mv rm mktemp
+require_commands sha256sum tar install mv rm mktemp grep find chmod
 
 EXPECTED_VERSION="4.135.0"
 EXPECTED_SHA256="300ef4e37e469e6368a4673c6a623e1c9ba8a34f42b394fb49c431a8900bc7d1"
+EXPECTED_VERSION_LINE="4.135.0 de89acbcdce9d9b870008a270c9f6466993d91f4 with Code 1.135.0"
 ARCHIVE=""
 usage() {
     printf 'Usage: %s --archive /absolute/path/code-server-4.135.0-linux-amd64.tar.gz\n' "$0" >&2
@@ -34,14 +35,17 @@ trap cleanup EXIT
 tar -xzf "$ARCHIVE" --strip-components=1 -C "$STAGE" \
     --no-same-owner --no-same-permissions
 [[ -x $STAGE/lib/node && -f $STAGE/out/node/entry.js ]] || fail "archive layout is invalid"
-mapfile -t version_lines < <(
+version_output=$(
     HOME="$STAGE/.probe-home" XDG_CONFIG_HOME="$STAGE/.probe-config" \
         "$STAGE/lib/node" "$STAGE" --version
 )
 rm -rf -- "$STAGE/.probe-home" "$STAGE/.probe-config"
-[[ ${version_lines[0]:-} == "$EXPECTED_VERSION" ]] || fail "archive version mismatch"
+[[ $(grep -Fxc -- "$EXPECTED_VERSION_LINE" <<<"$version_output") == 1 ]] || \
+    fail "archive version mismatch"
 chown -R root:root "$STAGE"
-chmod -R go-w "$STAGE"
+find "$STAGE" -type f -perm /111 -exec chmod 0755 {} +
+find "$STAGE" -type f ! -perm /111 -exec chmod 0644 {} +
+find "$STAGE" -type d -exec chmod 0755 {} +
 mv -- "$STAGE" /opt/code-server
 trap - EXIT
 printf 'Installed verified code-server %s; no service state was changed.\n' "$EXPECTED_VERSION"

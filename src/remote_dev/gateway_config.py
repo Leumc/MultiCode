@@ -30,6 +30,7 @@ def render_caddyfile(users: list[GatewayUser]) -> str:
     lines = [
         "{", "    admin off", "    auto_https off", "}", "",
         "127.0.0.1:9080 {",
+        "    bind 127.0.0.1",
     ]
     for user in sorted(users, key=lambda item: item.public_id):
         prefix = f"/u/{user.public_id}"

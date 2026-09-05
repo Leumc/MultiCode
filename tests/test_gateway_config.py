@@ -13,6 +13,7 @@ def test_gateway_routes_are_loopback_uuid_scoped_and_forward_authenticated():
         GatewayUser(BOB, 9102),
     ])
     assert "127.0.0.1:9080" in text
+    assert "    bind 127.0.0.1" in text
     assert "forward_auth 127.0.0.1:9000" in text
     assert f"handle /u/{ALICE}/*" in text
     assert "reverse_proxy 127.0.0.1:9101" in text

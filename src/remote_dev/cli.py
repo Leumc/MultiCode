@@ -128,6 +128,8 @@ def bootstrap_instance(
                     raise SystemExit("developer bootstrap recovery credential does not match database")
                 staged[0].unlink()
                 _fsync_directory(credential_dir)
+            else:
+                _fsync_directory(credential_dir)
             return existing_public
         if len(staged) != 1:
             raise SystemExit("developer bootstrap recovery state is ambiguous")
@@ -142,13 +144,18 @@ def bootstrap_instance(
     if credential.exists() or credential.is_symlink():
         raise SystemExit("instance credential already exists without matching database state")
     if staged:
-        raise SystemExit("orphaned developer bootstrap staging credential requires review")
+        if len(staged) != 1:
+            raise SystemExit("orphaned developer bootstrap staging state is ambiguous")
+        _read_safe_bootstrap_credential(staged[0])
+        staged[0].unlink()
+        _fsync_directory(credential_dir)
 
     token = token_factory()
     temporary = credential_dir / f".{public_id}.token.{os.getpid()}"
     descriptor = os.open(
         temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600,
     )
+    preserve_temporary = False
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
             stream.write(token)
@@ -162,12 +169,19 @@ def bootstrap_instance(
             os.link(temporary, credential, follow_symlinks=False)
             temporary.unlink()
         except Exception:
-            database.delete_unconfigured_developer(user["id"], public_id)
+            try:
+                database.delete_unconfigured_developer(user["id"], public_id)
+            except BaseException as compensation_error:
+                preserve_temporary = True
+                raise RuntimeError(
+                    "credential publish and database compensation failed; recoverable staging was preserved"
+                ) from compensation_error
             raise
         _fsync_directory(credential_dir)
         return user
     finally:
-        temporary.unlink(missing_ok=True)
+        if not preserve_temporary:
+            temporary.unlink(missing_ok=True)
 
 
 def cmd_bootstrap_instance(args) -> int:

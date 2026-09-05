@@ -10,6 +10,15 @@ def profile_text() -> str:
     return PROFILE.read_text(encoding="utf-8")
 
 
+def test_profile_allows_dynamic_user_private_state_and_own_cgroup_metadata():
+    body = profile_text()
+    assert "owner /var/lib/private/remote-dev/code-server/* rwk," in body
+    assert "owner /var/lib/private/remote-dev/code-server/*/** rwk," in body
+    assert "owner /var/cache/private/remote-dev/code-server/* rwk," in body
+    assert "owner /var/cache/private/remote-dev/code-server/*/** rwk," in body
+    assert "owner /proc/*/cgroup r," in body
+
+
 def test_profile_uses_uuid_image_mount_layout_not_legacy_srv_paths():
     value = profile_text()
     assert "/srv/remote-dev" not in value

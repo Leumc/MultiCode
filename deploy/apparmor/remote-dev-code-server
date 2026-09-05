@@ -38,10 +38,15 @@ profile remote-dev-code-server /opt/code-server/lib/node flags=(attach_disconnec
   # DynamicUser state, cache and runtime directories are per UUID instance.
   owner /var/lib/remote-dev/code-server/* rwk,
   owner /var/lib/remote-dev/code-server/*/** rwk,
+  owner /var/lib/private/remote-dev/code-server/* rwk,
+  owner /var/lib/private/remote-dev/code-server/*/** rwk,
   owner /var/cache/remote-dev/code-server/* rwk,
   owner /var/cache/remote-dev/code-server/*/** rwk,
+  owner /var/cache/private/remote-dev/code-server/* rwk,
+  owner /var/cache/private/remote-dev/code-server/*/** rwk,
   owner /run/remote-dev/code-server/* rwk,
   owner /run/remote-dev/code-server/*/** rwk,
+  owner /proc/*/cgroup r,
 
   # The per-user ext4 image appears only at /workspace in this mount namespace.
   owner /workspace rwk,

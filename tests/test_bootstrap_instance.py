@@ -158,6 +158,62 @@ def test_bootstrap_instance_fsyncs_staging_directory_before_database_commit(tmp_
     assert events.index("directory-fsync") < events.index("database-commit")
 
 
+def test_bootstrap_instance_preserves_recoverable_staging_when_compensation_fails(tmp_path, monkeypatch):
+    release, data, workspaces, credentials = layout(tmp_path)
+    database = Database(data / "control.db")
+    database.initialize()
+    real_link = cli.os.link
+    real_delete = database.delete_unconfigured_developer
+
+    monkeypatch.setattr(cli.os, "link", lambda *args, **kwargs: (_ for _ in ()).throw(OSError("publish failed")))
+    monkeypatch.setattr(
+        database, "delete_unconfigured_developer",
+        lambda *args, **kwargs: (_ for _ in ()).throw(sqlite3.OperationalError("compensation failed")),
+    )
+    with pytest.raises(RuntimeError, match="recoverable staging was preserved"):
+        cli.bootstrap_instance(
+            database=database, release=release, workspace_root=workspaces,
+            credential_dir=credentials, public_id=UUID, username="alice",
+            password="developer passphrase 123", token_factory=lambda: "rdp_recoverable",
+        )
+    staged = list(credentials.glob(f".{UUID}.token.*"))
+    assert len(staged) == 1
+    assert database.get_user_by_public_id(UUID) is not None
+
+    monkeypatch.setattr(cli.os, "link", real_link)
+    monkeypatch.setattr(database, "delete_unconfigured_developer", real_delete)
+    user = cli.bootstrap_instance(
+        database=database, release=release, workspace_root=workspaces,
+        credential_dir=credentials, public_id=UUID, username="alice",
+        password="unused retry password", token_factory=lambda: "must_not_replace",
+    )
+    assert user["public_id"] == UUID
+    assert not staged[0].exists()
+
+
+def test_bootstrap_instance_fsyncs_directory_on_complete_state_retry(tmp_path, monkeypatch):
+    release, data, workspaces, credentials = layout(tmp_path)
+    database = Database(data / "control.db")
+    database.initialize()
+    kwargs = dict(
+        database=database, release=release, workspace_root=workspaces,
+        credential_dir=credentials, public_id=UUID, username="alice",
+        password="developer passphrase 123",
+    )
+    cli.bootstrap_instance(**kwargs, token_factory=lambda: "rdp_first")
+    directory_fsyncs = []
+    real_fsync = cli.os.fsync
+
+    def record_fsync(fd):
+        if __import__("stat").S_ISDIR(cli.os.fstat(fd).st_mode):
+            directory_fsyncs.append(fd)
+        return real_fsync(fd)
+
+    monkeypatch.setattr(cli.os, "fsync", record_fsync)
+    cli.bootstrap_instance(**kwargs, token_factory=lambda: "must_not_replace")
+    assert len(directory_fsyncs) == 1
+
+
 def test_bootstrap_instance_never_overwrites_concurrently_created_credential(tmp_path, monkeypatch):
     release, data, workspaces, credentials = layout(tmp_path)
     database = Database(data / "control.db")
